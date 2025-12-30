@@ -125,6 +125,9 @@ jobs:
       - name: Install extension
         run: cargo pgrx install --pg-config ~/.pgrx/${{ matrix.pg_version }}.*/pgrx-install/bin/pg_config
 
+      - name: Configure PostgreSQL for logical replication
+        run: echo "wal_level = logical" >> ~/.pgrx/data-${{ matrix.pg_version }}/postgresql.conf
+
       - name: Start PostgreSQL
         run: cargo pgrx start pg${{ matrix.pg_version }}
 
