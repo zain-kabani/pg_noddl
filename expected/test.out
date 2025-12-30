@@ -1,0 +1,159 @@
+CREATE EXTENSION
+ pg_noddl_version 
+------------------
+ 0.1.0
+(1 row)
+
+ pg_noddl_is_enabled 
+---------------------
+ f
+(1 row)
+
+ pg_noddl_admin_user 
+---------------------
+ 
+(1 row)
+
+ pg_noddl_enable 
+-----------------
+ t
+(1 row)
+
+ pg_noddl_is_enabled 
+---------------------
+ t
+(1 row)
+
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+ pg_noddl_is_enabled 
+---------------------
+ f
+(1 row)
+
+psql:sql/test.sql:26: NOTICE:  table "test_table" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+ pg_noddl_enable 
+-----------------
+ t
+(1 row)
+
+psql:sql/test.sql:32: ERROR:  pg_noddl: CREATE TABLE is blocked
+Query: create table blocked_table (id int);
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+psql:sql/test.sql:33: ERROR:  pg_noddl: ALTER TABLE is blocked
+Query: alter table test_table add column name text;
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+psql:sql/test.sql:34: ERROR:  pg_noddl: CREATE INDEX is blocked
+Query: create index blocked_idx on test_table(id);
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+psql:sql/test.sql:35: ERROR:  pg_noddl: CREATE TYPE is blocked
+Query: create type blocked_type as (x int, y int);
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+psql:sql/test.sql:36: ERROR:  pg_noddl: CREATE FUNCTION is blocked
+Query: create function blocked_func() returns int as $$ select 1; $$ language sql;
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+ pg_noddl_enable 
+-----------------
+ t
+(1 row)
+
+INSERT 0 1
+UPDATE 1
+DELETE 1
+ id 
+----
+(0 rows)
+
+SET
+ search_path 
+-------------
+ public
+(1 row)
+
+BEGIN
+ROLLBACK
+VACUUM
+ANALYZE
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+ pg_noddl_enable 
+-----------------
+ t
+(1 row)
+
+CREATE PUBLICATION
+ALTER PUBLICATION
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+DROP PUBLICATION
+psql:sql/test.sql:75: ERROR:  role "nonexistent_user_12345" does not exist
+CREATE ROLE
+CREATE ROLE
+ pg_noddl_enable_with_admin 
+----------------------------
+ t
+(1 row)
+
+ pg_noddl_admin_user 
+---------------------
+ noddl_admin
+(1 row)
+
+psql:sql/test.sql:87: ERROR:  pg_noddl: CREATE TABLE is blocked
+Query: create table should_fail (id int);
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+SET
+CREATE ROLE
+DROP ROLE
+RESET
+SET
+psql:sql/test.sql:97: ERROR:  pg_noddl: CREATE TABLE is blocked
+Query: create table admin_blocked_table (id int);
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+RESET
+SET
+psql:sql/test.sql:102: ERROR:  pg_noddl: CREATE ROLE is blocked
+Query: create role regular_user_role;
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
+RESET
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+DROP ROLE
+DROP ROLE
+INSERT 0 3
+ pg_noddl_enable 
+-----------------
+ t
+(1 row)
+
+TRUNCATE TABLE
+ id 
+----
+(0 rows)
+
+ pg_noddl_disable 
+------------------
+ t
+(1 row)
+
+DROP TABLE
+DROP EXTENSION

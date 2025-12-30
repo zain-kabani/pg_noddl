@@ -1,0 +1,5 @@
+comment = 'Block DDL statements during logical replication migrations'
+default_version = '@CARGO_VERSION@'
+module_pathname = '$libdir/pg_noddl'
+relocatable = false
+superuser = true

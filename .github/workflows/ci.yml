@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Check formatting
+        run: cargo fmt -- --check
+
+      - name: Clippy (pg17)
+        run: cargo clippy --features pg17 -- -D warnings
+
+  test:
+    name: Test (PostgreSQL ${{ matrix.pg_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg_version: [17, 18]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install PostgreSQL ${{ matrix.pg_version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-${{ matrix.pg_version }} postgresql-server-dev-${{ matrix.pg_version }}
+
+      - name: Install cargo-pgrx
+        run: |
+          # Get pgrx version from Cargo.toml
+          PGRX_VERSION=$(grep -m1 'pgrx = "' Cargo.toml | sed -E 's/.*"=?([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+          cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
+
+      - name: Initialize pgrx with system PostgreSQL
+        run: |
+          cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+
+      - name: Run tests
+        run: |
+          cargo pgrx test pg${{ matrix.pg_version }}
+
+  test-sql:
+    name: SQL Regression Tests (PostgreSQL ${{ matrix.pg_version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pg_version: [17, 18]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-action@stable
+
+      - name: Install just
+        uses: extractions/setup-just@v2
+
+      - name: Install PostgreSQL ${{ matrix.pg_version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-${{ matrix.pg_version }} postgresql-server-dev-${{ matrix.pg_version }}
+
+      - name: Install cargo-pgrx
+        run: |
+          PGRX_VERSION=$(grep -m1 'pgrx = "' Cargo.toml | sed -E 's/.*"=?([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+          cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
+
+      - name: Initialize pgrx with system PostgreSQL
+        run: |
+          cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+
+      - name: Install extension
+        run: just install pg${{ matrix.pg_version }}
+
+      - name: Run SQL regression tests
+        run: just test-sql pg${{ matrix.pg_version }}

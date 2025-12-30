@@ -1,0 +1,7 @@
+# macOS linker flags for pgrx extensions
+# PostgreSQL extension symbols are resolved at runtime when loaded into PostgreSQL
+[target.aarch64-apple-darwin]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]
+
+[target.x86_64-apple-darwin]
+rustflags = ["-C", "link-args=-Wl,-undefined,dynamic_lookup"]

@@ -1,0 +1,26 @@
+[package]
+name = "pg_noddl"
+version = "0.1.0"
+edition = "2021"
+authors = ["PlanetScale"]
+license = "PROPRIETARY"
+description = "PostgreSQL extension to block DDL during logical replication migrations"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[[bin]]
+name = "pgrx_embed_pg_noddl"
+path = "src/bin/pgrx_embed.rs"
+
+[features]
+default = ["pg17"]
+pg17 = ["pgrx/pg17", "pgrx-tests/pg17"]
+pg18 = ["pgrx/pg18", "pgrx-tests/pg18"]
+pg_test = []
+
+[dependencies]
+pgrx = "=0.16.1"
+
+[dev-dependencies]
+pgrx-tests = "=0.16.1"
