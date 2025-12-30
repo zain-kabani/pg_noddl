@@ -93,6 +93,11 @@ jobs:
       - name: Initialize pgrx
         run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
 
+      - name: Set permissions
+        run: |
+          PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+          sudo chmod a+rwx $($PG_CONFIG --pkglibdir) $($PG_CONFIG --sharedir)/extension /var/run/postgresql/
+
       - run: cargo pgrx test pg${{ matrix.pg_version }}
 
   test-sql:
