@@ -58,16 +58,14 @@ analyze test_table;
 select pg_noddl_disable();
 
 --
--- Test: Publication/subscription CREATE/ALTER is allowed (needed for migration management)
--- Note: DROP PUBLICATION is currently blocked because T_DropStmt is a single node type
+-- Test: Publication/subscription DDL is blocked for regular users
 --
 select pg_noddl_enable();
 
+-- These should fail for regular users
 create publication test_pub for table test_table;
-alter publication test_pub drop table test_table;
 
 select pg_noddl_disable();
-drop publication test_pub;
 
 --
 -- Test: Admin user validation - non-existent user should fail
@@ -80,6 +78,10 @@ select pg_noddl_enable_with_admin('nonexistent_user_12345');
 create role noddl_admin login createrole;
 create role regular_user login;
 
+-- Grant permissions needed for publication management
+grant create on database postgres to noddl_admin;
+alter table test_table owner to noddl_admin;
+
 select pg_noddl_enable_with_admin('noddl_admin');
 select pg_noddl_admin_user();
 
@@ -90,6 +92,12 @@ create table should_fail (id int);
 set session authorization noddl_admin;
 create role test_role_by_admin;
 drop role test_role_by_admin;
+reset session authorization;
+
+-- Admin should be able to manage publications (for replication setup)
+set session authorization noddl_admin;
+create publication test_pub for table test_table;
+alter publication test_pub drop table test_table;
 reset session authorization;
 
 -- Admin should still be blocked from schema DDL
@@ -104,6 +112,9 @@ reset session authorization;
 
 -- Cleanup
 select pg_noddl_disable();
+drop publication test_pub;
+alter table test_table owner to current_user;
+revoke create on database postgres from noddl_admin;
 drop role noddl_admin;
 drop role regular_user;
 

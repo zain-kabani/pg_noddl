@@ -125,6 +125,13 @@ fn is_admin_bypassable(node_tag: pg_sys::NodeTag) -> bool {
         // Metadata - informational only, safe to differ
         | T_CommentStmt       // COMMENT ON
         | T_SecLabelStmt // SECURITY LABEL
+
+        // Publication/Subscription - admin needs to manage replication
+        | T_CreatePublicationStmt   // CREATE PUBLICATION
+        | T_AlterPublicationStmt    // ALTER PUBLICATION
+        | T_CreateSubscriptionStmt  // CREATE SUBSCRIPTION
+        | T_AlterSubscriptionStmt   // ALTER SUBSCRIPTION
+        | T_DropSubscriptionStmt // DROP SUBSCRIPTION
     )
 }
 
@@ -252,11 +259,13 @@ fn is_blocked_statement(node_tag: pg_sys::NodeTag) -> bool {
         | T_CommentStmt        // COMMENT ON
         | T_SecLabelStmt // SECURITY LABEL
 
-                         // NOTE: Publication/Subscription DDL is ALLOWED because it's needed
-                         // to manage the logical replication itself during migration.
-                         // T_CreatePublicationStmt, T_AlterPublicationStmt,
-                         // T_CreateSubscriptionStmt, T_AlterSubscriptionStmt,
-                         // T_DropSubscriptionStmt are intentionally NOT in this list.
+        // Publication/Subscription DDL - blocked for regular users,
+        // but admin can bypass to manage replication during migration
+        | T_CreatePublicationStmt   // CREATE PUBLICATION
+        | T_AlterPublicationStmt    // ALTER PUBLICATION
+        | T_CreateSubscriptionStmt  // CREATE SUBSCRIPTION
+        | T_AlterSubscriptionStmt   // ALTER SUBSCRIPTION
+        | T_DropSubscriptionStmt // DROP SUBSCRIPTION
     )
 }
 

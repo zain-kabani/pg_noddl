@@ -43,8 +43,9 @@ test-sql pg=PG_VERSION:
 
     "$PGBIN/psql" -h localhost -p $PORT -d postgres -c \
         "DROP EXTENSION IF EXISTS pg_noddl CASCADE; \
-         DROP TABLE IF EXISTS test_table; \
          DROP PUBLICATION IF EXISTS test_pub; \
+         DROP TABLE IF EXISTS test_table; \
+         DROP OWNED BY noddl_admin; \
          DROP ROLE IF EXISTS noddl_admin; \
          DROP ROLE IF EXISTS regular_user;" 2>/dev/null || true
 
@@ -75,8 +76,9 @@ test-sql-update pg=PG_VERSION:
 
     "$PGBIN/psql" -h localhost -p $PORT -d postgres -c \
         "DROP EXTENSION IF EXISTS pg_noddl CASCADE; \
-         DROP TABLE IF EXISTS test_table; \
          DROP PUBLICATION IF EXISTS test_pub; \
+         DROP TABLE IF EXISTS test_table; \
+         DROP OWNED BY noddl_admin; \
          DROP ROLE IF EXISTS noddl_admin; \
          DROP ROLE IF EXISTS regular_user;" 2>/dev/null || true
 
