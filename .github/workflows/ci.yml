@@ -11,8 +11,8 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  lint:
-    name: Lint
+  fmt:
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,13 +20,10 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          components: rustfmt, clippy
+          components: rustfmt
 
       - name: Check formatting
         run: cargo fmt -- --check
-
-      - name: Clippy (pg17)
-        run: cargo clippy --features pg17 -- -D warnings
 
   test:
     name: Test (PostgreSQL ${{ matrix.pg_version }})
@@ -40,6 +37,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
 
       - name: Install PostgreSQL ${{ matrix.pg_version }}
         run: |
@@ -52,20 +51,20 @@ jobs:
 
       - name: Install cargo-pgrx
         run: |
-          # Get pgrx version from Cargo.toml
           PGRX_VERSION=$(grep -m1 'pgrx = "' Cargo.toml | sed -E 's/.*"=?([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
           cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
 
-      - name: Initialize pgrx with system PostgreSQL
-        run: |
-          cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+      - name: Initialize pgrx
+        run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+
+      - name: Clippy
+        run: cargo clippy --features pg${{ matrix.pg_version }} -- -D warnings
 
       - name: Run tests
-        run: |
-          cargo pgrx test pg${{ matrix.pg_version }}
+        run: cargo pgrx test pg${{ matrix.pg_version }}
 
   test-sql:
-    name: SQL Regression Tests (PostgreSQL ${{ matrix.pg_version }})
+    name: SQL Regression (PostgreSQL ${{ matrix.pg_version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -94,9 +93,8 @@ jobs:
           PGRX_VERSION=$(grep -m1 'pgrx = "' Cargo.toml | sed -E 's/.*"=?([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
           cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
 
-      - name: Initialize pgrx with system PostgreSQL
-        run: |
-          cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+      - name: Initialize pgrx
+        run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
 
       - name: Install extension
         run: just install pg${{ matrix.pg_version }}
