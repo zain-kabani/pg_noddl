@@ -76,9 +76,6 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install just
-        uses: extractions/setup-just@v2
-
       - name: Install PostgreSQL ${{ matrix.pg_version }}
         run: |
           sudo apt-get update
@@ -97,7 +94,19 @@ jobs:
         run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
 
       - name: Install extension
-        run: just install pg${{ matrix.pg_version }}
+        run: cargo pgrx install --sudo --pg-config /usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+
+      - name: Start PostgreSQL
+        run: sudo systemctl start postgresql
 
       - name: Run SQL regression tests
-        run: just test-sql pg${{ matrix.pg_version }}
+        run: |
+          sudo -u postgres psql -c "DROP EXTENSION IF EXISTS pg_noddl CASCADE; DROP TABLE IF EXISTS test_table; DROP PUBLICATION IF EXISTS test_pub; DROP ROLE IF EXISTS noddl_admin; DROP ROLE IF EXISTS regular_user;" 2>/dev/null || true
+          ACTUAL=$(mktemp)
+          sudo -u postgres psql -f sql/test.sql > "$ACTUAL" 2>&1
+          if diff -u expected/test.out "$ACTUAL"; then
+            echo "✓ SQL regression tests passed"
+          else
+            echo "✗ SQL regression tests failed"
+            exit 1
+          fi
