@@ -36,17 +36,12 @@ jobs:
         with:
           components: clippy
 
-      - name: Cache cargo
+      - name: Cache
         uses: Swatinem/rust-cache@v2
         with:
+          prefix-key: lint
           cache-all-crates: true
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-server-dev-17
+          cache-directories: ~/.pgrx
 
       - name: Install cargo-pgrx
         run: |
@@ -54,7 +49,7 @@ jobs:
           cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
 
       - name: Initialize pgrx
-        run: cargo pgrx init --pg17=/usr/lib/postgresql/17/bin/pg_config
+        run: cargo pgrx init --pg17 download
 
       - name: Run Clippy
         run: cargo clippy --no-default-features --features pg17 -- -D warnings
@@ -72,18 +67,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo
+      - name: Cache
         uses: Swatinem/rust-cache@v2
         with:
           prefix-key: pg${{ matrix.pg_version }}
           cache-all-crates: true
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-server-dev-${{ matrix.pg_version }}
+          cache-directories: ~/.pgrx
 
       - name: Install cargo-pgrx
         run: |
@@ -91,7 +80,7 @@ jobs:
           cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
 
       - name: Initialize pgrx
-        run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+        run: cargo pgrx init --pg${{ matrix.pg_version }} download
 
       - name: Run tests
         run: cargo pgrx test pg${{ matrix.pg_version }}
@@ -109,18 +98,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo
+      - name: Cache
         uses: Swatinem/rust-cache@v2
         with:
           prefix-key: pg${{ matrix.pg_version }}
           cache-all-crates: true
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-common
-          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-${{ matrix.pg_version }} postgresql-server-dev-${{ matrix.pg_version }}
+          cache-directories: ~/.pgrx
 
       - name: Install cargo-pgrx
         run: |
@@ -128,18 +111,18 @@ jobs:
           cargo install cargo-pgrx --version "$PGRX_VERSION" --locked
 
       - name: Initialize pgrx
-        run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+        run: cargo pgrx init --pg${{ matrix.pg_version }} download
 
       - name: Install extension
-        run: cargo pgrx install --pg-config /usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+        run: cargo pgrx install --pg-config ~/.pgrx/${{ matrix.pg_version }}.*/pgrx-install/bin/pg_config
 
-      - name: Start PostgreSQL via pgrx
+      - name: Start PostgreSQL
         run: cargo pgrx start pg${{ matrix.pg_version }}
 
       - name: Run SQL regression tests
         run: |
           PORT=288${{ matrix.pg_version }}
-          PGBIN=/usr/lib/postgresql/${{ matrix.pg_version }}/bin
+          PGBIN=$(dirname $(cargo pgrx info pg-config pg${{ matrix.pg_version }}))
           echo "Using PostgreSQL ${{ matrix.pg_version }} on port $PORT"
           "$PGBIN/psql" -h localhost -p $PORT -d postgres -c "DROP EXTENSION IF EXISTS pg_noddl CASCADE; DROP TABLE IF EXISTS test_table; DROP PUBLICATION IF EXISTS test_pub; DROP ROLE IF EXISTS noddl_admin; DROP ROLE IF EXISTS regular_user;" 2>/dev/null || true
           ACTUAL=$(mktemp)
