@@ -41,7 +41,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-server-dev-17
+          sudo apt-get install -y postgresql-17 postgresql-server-dev-17
 
       - name: Install cargo-pgrx
         run: |
@@ -79,7 +79,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
-          sudo apt-get install -y postgresql-server-dev-${{ matrix.pg_version }}
+          sudo apt-get install -y postgresql-${{ matrix.pg_version }} postgresql-server-dev-${{ matrix.pg_version }}
 
       - name: Install cargo-pgrx
         run: |
@@ -133,9 +133,8 @@ jobs:
 
       - name: Set permissions
         run: |
-          sudo chmod a+rwx $(pg_config --pkglibdir) $(pg_config --sharedir)/extension /var/run/postgresql/
-        env:
-          PATH: /usr/lib/postgresql/${{ matrix.pg_version }}/bin:$PATH
+          PG_CONFIG=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
+          sudo chmod a+rwx $($PG_CONFIG --pkglibdir) $($PG_CONFIG --sharedir)/extension /var/run/postgresql/
 
       - name: Install extension
         run: cargo pgrx install --pg-config /usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
