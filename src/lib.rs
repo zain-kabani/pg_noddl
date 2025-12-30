@@ -47,8 +47,8 @@ fn pg_noddl_enable_with_admin(admin_username: &str) -> bool {
     // Validate that the role exists before enabling
     // get_role_oid with missing_ok=false will throw an error if role doesn't exist
     if !admin_username.is_empty() {
-        let c_username = CString::new(admin_username)
-            .expect("pg_noddl: invalid username contains null byte");
+        let c_username =
+            CString::new(admin_username).expect("pg_noddl: invalid username contains null byte");
         unsafe {
             // This will raise a PostgreSQL ERROR if the role doesn't exist
             pg_sys::get_role_oid(c_username.as_ptr(), false);
@@ -124,7 +124,7 @@ fn is_admin_bypassable(node_tag: pg_sys::NodeTag) -> bool {
 
         // Metadata - informational only, safe to differ
         | T_CommentStmt       // COMMENT ON
-        | T_SecLabelStmt      // SECURITY LABEL
+        | T_SecLabelStmt // SECURITY LABEL
     )
 }
 
@@ -250,13 +250,13 @@ fn is_blocked_statement(node_tag: pg_sys::NodeTag) -> bool {
 
         // Comment (metadata, but can be important)
         | T_CommentStmt        // COMMENT ON
-        | T_SecLabelStmt       // SECURITY LABEL
+        | T_SecLabelStmt // SECURITY LABEL
 
-        // NOTE: Publication/Subscription DDL is ALLOWED because it's needed
-        // to manage the logical replication itself during migration.
-        // T_CreatePublicationStmt, T_AlterPublicationStmt,
-        // T_CreateSubscriptionStmt, T_AlterSubscriptionStmt,
-        // T_DropSubscriptionStmt are intentionally NOT in this list.
+                         // NOTE: Publication/Subscription DDL is ALLOWED because it's needed
+                         // to manage the logical replication itself during migration.
+                         // T_CreatePublicationStmt, T_AlterPublicationStmt,
+                         // T_CreateSubscriptionStmt, T_AlterSubscriptionStmt,
+                         // T_DropSubscriptionStmt are intentionally NOT in this list.
     )
 }
 
@@ -562,8 +562,7 @@ mod tests {
     #[pg_test]
     fn test_admin_bypass_grant() {
         // Get current user (should be the test superuser)
-        let current_user: Option<String> =
-            Spi::get_one("SELECT current_user::text").unwrap();
+        let current_user: Option<String> = Spi::get_one("SELECT current_user::text").unwrap();
         let username = current_user.unwrap();
 
         // Enable with current user as admin
@@ -587,8 +586,7 @@ mod tests {
     #[should_panic(expected = "pg_noddl")]
     fn test_admin_cannot_bypass_table_ddl() {
         // Get current user
-        let current_user: Option<String> =
-            Spi::get_one("SELECT current_user::text").unwrap();
+        let current_user: Option<String> = Spi::get_one("SELECT current_user::text").unwrap();
         let username = current_user.unwrap();
 
         // Enable with current user as admin
