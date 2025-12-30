@@ -58,7 +58,7 @@ jobs:
         run: cargo pgrx init --pg${{ matrix.pg_version }}=/usr/lib/postgresql/${{ matrix.pg_version }}/bin/pg_config
 
       - name: Clippy
-        run: cargo clippy --features pg${{ matrix.pg_version }} -- -D warnings
+        run: cargo clippy --no-default-features --features pg${{ matrix.pg_version }} -- -D warnings
 
       - name: Run tests
         run: cargo pgrx test pg${{ matrix.pg_version }}
