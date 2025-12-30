@@ -94,17 +94,19 @@ ANALYZE
  t
 (1 row)
 
-CREATE PUBLICATION
-ALTER PUBLICATION
+psql:sql/test.sql:66: ERROR:  pg_noddl: CREATE PUBLICATION is blocked
+Query: create publication test_pub for table test_table;
+Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
  pg_noddl_disable 
 ------------------
  t
 (1 row)
 
-DROP PUBLICATION
-psql:sql/test.sql:75: ERROR:  role "nonexistent_user_12345" does not exist
+psql:sql/test.sql:73: ERROR:  role "nonexistent_user_12345" does not exist
 CREATE ROLE
 CREATE ROLE
+GRANT
+ALTER TABLE
  pg_noddl_enable_with_admin 
 ----------------------------
  t
@@ -115,7 +117,7 @@ CREATE ROLE
  noddl_admin
 (1 row)
 
-psql:sql/test.sql:87: ERROR:  pg_noddl: CREATE TABLE is blocked
+psql:sql/test.sql:89: ERROR:  pg_noddl: CREATE TABLE is blocked
 Query: create table should_fail (id int);
 Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
 SET
@@ -123,12 +125,16 @@ CREATE ROLE
 DROP ROLE
 RESET
 SET
-psql:sql/test.sql:97: ERROR:  pg_noddl: CREATE TABLE is blocked
+CREATE PUBLICATION
+ALTER PUBLICATION
+RESET
+SET
+psql:sql/test.sql:105: ERROR:  pg_noddl: CREATE TABLE is blocked
 Query: create table admin_blocked_table (id int);
 Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
 RESET
 SET
-psql:sql/test.sql:102: ERROR:  pg_noddl: CREATE ROLE is blocked
+psql:sql/test.sql:110: ERROR:  pg_noddl: CREATE ROLE is blocked
 Query: create role regular_user_role;
 Hint: Disable pg_noddl with SELECT pg_noddl_disable(); or wait for it to be enabled.
 RESET
@@ -137,6 +143,9 @@ RESET
  t
 (1 row)
 
+DROP PUBLICATION
+ALTER TABLE
+REVOKE
 DROP ROLE
 DROP ROLE
 INSERT 0 3
