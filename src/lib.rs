@@ -375,6 +375,7 @@ unsafe fn register_hook() {
     /// cheaper than SeqCst. The check is the very first thing we do - if DDL blocking
     /// is disabled, we immediately fall through to the previous hook with zero
     /// additional overhead beyond the atomic load.
+    #[allow(clippy::too_many_arguments)]
     #[pg_guard]
     unsafe extern "C-unwind" fn pg_noddl_process_utility(
         pstmt: *mut pg_sys::PlannedStmt,
